@@ -1,34 +1,58 @@
-# azure-elastic-jobs-agent
+# Azure SQL Elastic Jobs Agent (Bicep)
 
-This repository contains Bicep templates to deploy:
+Infrastructure-as-Code templates to provision an Azure SQL environment with an Elastic Job Agent using modular Bicep components.
+
+## Overview
+
+This deployment creates:
 
 - Azure SQL logical server
-- Application database
+- Primary application database
 - Elastic Job metadata database
 - Azure SQL Elastic Job Agent
-- Optional firewall rules
+- Optional SQL firewall rules
 
-## Files
+## Architecture
 
-- `infra/main.bicep` - Entry-point template
-- `infra/modules/sql-server.bicep` - SQL logical server
-- `infra/modules/sql-database.bicep` - SQL database (reused for app + job DB)
-- `infra/modules/sql-firewall-rule.bicep` - SQL firewall rules
-- `infra/modules/elastic-job-agent.bicep` - SQL Elastic Job Agent
-- `infra/main.parameters.json` - Sample deployment parameters
+```mermaid
+flowchart TD
+    RG[Resource Group] --> SQL[Azure SQL Server]
+    SQL --> APPDB[Application Database]
+    SQL --> JOBDB[Job Metadata Database]
+    SQL --> AGENT[Elastic Job Agent]
+    AGENT --> JOBDB
+
+    SQL --> FW1[Firewall Rule: AllowAzureServices]
+    SQL --> FW2[Firewall Rule: AllowCustomClientIp]
+
+    MAIN[infra/main.bicep] --> M1[modules/sql-server.bicep]
+    MAIN --> M2[modules/sql-database.bicep - app]
+    MAIN --> M3[modules/sql-database.bicep - job]
+    MAIN --> M4[modules/sql-firewall-rule.bicep]
+    MAIN --> M5[modules/elastic-job-agent.bicep]
+```
+
+## Repository Structure
+
+- `infra/main.bicep`: Deployment entry point and module orchestration
+- `infra/modules/sql-server.bicep`: SQL logical server
+- `infra/modules/sql-database.bicep`: Reusable SQL database module
+- `infra/modules/sql-firewall-rule.bicep`: Reusable SQL firewall rule module
+- `infra/modules/elastic-job-agent.bicep`: Elastic Job Agent
+- `infra/main.parameters.json`: Example parameter values
 
 ## Prerequisites
 
-- Azure subscription
-- Azure CLI logged in (`az login`)
-- A target resource group
+- Azure subscription with permissions to deploy SQL resources
+- Azure CLI installed and authenticated (`az login`)
+- Existing or new resource group target
 
-## Deploy
+## Deployment
 
-1. Update values in `infra/main.parameters.json`:
-	 - `sqlServerName` must be globally unique.
-	 - `sqlAdminPassword` must meet Azure SQL password complexity requirements.
-	 - Optionally set `customFirewallStartIp` and `customFirewallEndIp`.
+1. Update `infra/main.parameters.json`:
+   - `sqlServerName` must be globally unique.
+   - `sqlAdminPassword` must satisfy Azure SQL complexity requirements.
+   - Optionally set `customFirewallStartIp` and `customFirewallEndIp`.
 
 2. Create a resource group (if needed):
 
@@ -36,17 +60,37 @@ This repository contains Bicep templates to deploy:
 az group create --name <resource-group-name> --location <azure-region>
 ```
 
-3. Deploy the Bicep template:
+3. Deploy the templates:
 
 ```bash
 az deployment group create \
-	--resource-group <resource-group-name> \
-	--template-file infra/main.bicep \
-	--parameters @infra/main.parameters.json
+  --resource-group <resource-group-name> \
+  --template-file infra/main.bicep \
+  --parameters @infra/main.parameters.json
 ```
 
-## Notes
+## Key Parameters
 
-- The Elastic Job Agent is linked to the `jobDatabaseName` database.
-- `allowAzureServices=true` creates SQL firewall rule `AllowAzureServices` (`0.0.0.0`).
-- If both custom firewall IP parameters are non-empty, `AllowCustomClientIp` is created.
+- `sqlServerName`: Logical server name (global uniqueness required)
+- `sqlAdminLogin` / `sqlAdminPassword`: SQL administrator credentials
+- `sqlDatabaseName`: Application database name
+- `jobDatabaseName`: Elastic Job metadata database name
+- `elasticJobAgentName`: Elastic Job Agent resource name
+- `allowAzureServices`: Creates `AllowAzureServices` firewall rule when `true`
+- `customFirewallStartIp` / `customFirewallEndIp`: Creates `AllowCustomClientIp` when both are provided
+
+## Outputs
+
+The deployment returns:
+
+- SQL server resource ID
+- SQL server fully qualified domain name
+- Application database resource ID
+- Job database resource ID
+- Elastic Job Agent resource ID
+
+## Operational Notes
+
+- The Elastic Job Agent is bound to the job metadata database.
+- Restrict firewall access to required IP ranges for production.
+- Store secrets securely (for example, Azure Key Vault) instead of committing credentials.

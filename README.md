@@ -24,12 +24,6 @@ flowchart TD
 
     SQL --> FW1[Firewall Rule: AllowAzureServices]
     SQL --> FW2[Firewall Rule: AllowCustomClientIp]
-
-    MAIN[infra/main.bicep] --> M1[modules/sql-server.bicep]
-    MAIN --> M2[modules/sql-database.bicep - app]
-    MAIN --> M3[modules/sql-database.bicep - job]
-    MAIN --> M4[modules/sql-firewall-rule.bicep]
-    MAIN --> M5[modules/elastic-job-agent.bicep]
 ```
 
 ## Repository Structure

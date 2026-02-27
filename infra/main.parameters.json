@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus"
+    },
+    "sqlServerName": {
+      "value": "<unique-sql-server-name>"
+    },
+    "sqlAdminLogin": {
+      "value": "sqladminuser"
+    },
+    "sqlAdminPassword": {
+      "value": "<strong-password>"
+    },
+    "sqlDatabaseName": {
+      "value": "appdb"
+    },
+    "sqlDatabaseSkuName": {
+      "value": "S0"
+    },
+    "sqlDatabaseSkuTier": {
+      "value": "Standard"
+    },
+    "jobDatabaseName": {
+      "value": "jobdb"
+    },
+    "jobDatabaseSkuName": {
+      "value": "S1"
+    },
+    "jobDatabaseSkuTier": {
+      "value": "Standard"
+    },
+    "elasticJobAgentName": {
+      "value": "elastic-job-agent"
+    },
+    "allowAzureServices": {
+      "value": true
+    },
+    "customFirewallStartIp": {
+      "value": ""
+    },
+    "customFirewallEndIp": {
+      "value": ""
+    }
+  }
+}

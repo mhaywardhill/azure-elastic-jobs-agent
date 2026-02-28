@@ -15,7 +15,8 @@ fi
 required_vars=(
   RESOURCE_GROUP
   LOCATION
-  SQL_SERVER_NAME
+  APP_SQL_SERVER_NAME
+  JOB_SQL_SERVER_NAME
   SQL_ADMIN_LOGIN
   SQL_ADMIN_PASSWORD
 )
@@ -57,7 +58,8 @@ az deployment group create \
   --template-file "infra/main.bicep" \
   --parameters \
     location="${LOCATION}" \
-    sqlServerName="${SQL_SERVER_NAME}" \
+    appSqlServerName="${APP_SQL_SERVER_NAME}" \
+    jobSqlServerName="${JOB_SQL_SERVER_NAME}" \
     sqlAdminLogin="${SQL_ADMIN_LOGIN}" \
     sqlAdminPassword="${SQL_ADMIN_PASSWORD}" \
     sqlDatabaseName="${SQL_DATABASE_NAME}" \

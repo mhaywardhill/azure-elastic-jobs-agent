@@ -6,7 +6,8 @@ Infrastructure-as-Code templates to provision an Azure SQL environment with an E
 
 This deployment creates:
 
-- Azure SQL logical server
+- Azure SQL logical server for application database
+- Azure SQL logical server for Elastic Job metadata database
 - Primary application database
 - Elastic Job metadata database
 - Azure SQL Elastic Job Agent
@@ -16,14 +17,17 @@ This deployment creates:
 
 ```mermaid
 flowchart TD
-    RG[Resource Group] --> SQL[Azure SQL Server]
-    SQL --> APPDB[Application Database]
-    SQL --> JOBDB[Job Metadata Database]
-    SQL --> AGENT[Elastic Job Agent]
+  RG[Resource Group] --> APP_SQL[App Azure SQL Server]
+  RG --> JOB_SQL[Job Azure SQL Server]
+  APP_SQL --> APPDB[Application Database]
+  JOB_SQL --> JOBDB[Job Metadata Database]
+  JOB_SQL --> AGENT[Elastic Job Agent]
     AGENT --> JOBDB
 
-    SQL --> FW1[Firewall Rule: AllowAzureServices]
-    SQL --> FW2[Firewall Rule: AllowCustomClientIp]
+  APP_SQL --> APP_FW1[Firewall Rule: AllowAzureServices]
+  APP_SQL --> APP_FW2[Firewall Rule: AllowCustomClientIp]
+  JOB_SQL --> JOB_FW1[Firewall Rule: AllowAzureServices]
+  JOB_SQL --> JOB_FW2[Firewall Rule: AllowCustomClientIp]
 ```
 
 ## Repository Structure
@@ -51,7 +55,8 @@ flowchart TD
 ```bash
 export RESOURCE_GROUP="rg-sql-jobs-dev"
 export LOCATION="eastus"
-export SQL_SERVER_NAME="<globally-unique-sql-server-name>"
+export APP_SQL_SERVER_NAME="<globally-unique-app-sql-server-name>"
+export JOB_SQL_SERVER_NAME="<globally-unique-job-sql-server-name>"
 export SQL_ADMIN_LOGIN="sqladminuser"
 export SQL_ADMIN_PASSWORD="<strong-password>"
 ```
@@ -82,7 +87,7 @@ The script validates required variables, ensures the resource group exists, and 
 ### Option 2: Deploy with parameter file
 
 1. Update `infra/main.parameters.json`:
-  - `sqlServerName` must be globally unique.
+  - `appSqlServerName` and `jobSqlServerName` must both be globally unique.
   - `sqlAdminPassword` must satisfy Azure SQL complexity requirements.
   - Optionally set `customFirewallStartIp` and `customFirewallEndIp`.
 
@@ -103,7 +108,8 @@ az deployment group create \
 
 ## Key Parameters
 
-- `sqlServerName`: Logical server name (global uniqueness required)
+- `appSqlServerName`: Application database logical server name (global uniqueness required)
+- `jobSqlServerName`: Job metadata database logical server name (global uniqueness required)
 - `sqlAdminLogin` / `sqlAdminPassword`: SQL administrator credentials
 - `sqlDatabaseName`: Application database name
 - `jobDatabaseName`: Elastic Job metadata database name
@@ -113,7 +119,8 @@ az deployment group create \
 
 For `deploy.sh`, these map to the following environment variables:
 
-- `sqlServerName` -> `SQL_SERVER_NAME`
+- `appSqlServerName` -> `APP_SQL_SERVER_NAME`
+- `jobSqlServerName` -> `JOB_SQL_SERVER_NAME`
 - `sqlAdminLogin` -> `SQL_ADMIN_LOGIN`
 - `sqlAdminPassword` -> `SQL_ADMIN_PASSWORD`
 - `sqlDatabaseName` -> `SQL_DATABASE_NAME`
@@ -127,8 +134,10 @@ For `deploy.sh`, these map to the following environment variables:
 
 The deployment returns:
 
-- SQL server resource ID
-- SQL server fully qualified domain name
+- App SQL server resource ID
+- App SQL server fully qualified domain name
+- Job SQL server resource ID
+- Job SQL server fully qualified domain name
 - Application database resource ID
 - Job database resource ID
 - Elastic Job Agent resource ID

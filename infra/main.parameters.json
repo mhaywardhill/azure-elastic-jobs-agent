@@ -5,8 +5,11 @@
     "location": {
       "value": "eastus"
     },
-    "sqlServerName": {
-      "value": "<unique-sql-server-name>"
+    "appSqlServerName": {
+      "value": "<unique-app-sql-server-name>"
+    },
+    "jobSqlServerName": {
+      "value": "<unique-job-sql-server-name>"
     },
     "sqlAdminLogin": {
       "value": "sqladminuser"

@@ -3,8 +3,11 @@ targetScope = 'resourceGroup'
 @description('Azure region for all resources.')
 param location string = resourceGroup().location
 
-@description('Name of the Azure SQL logical server.')
-param sqlServerName string
+@description('Name of the Azure SQL logical server for the application database.')
+param appSqlServerName string
+
+@description('Name of the Azure SQL logical server for the Elastic Job metadata database.')
+param jobSqlServerName string
 
 @description('Administrator username for the SQL server.')
 param sqlAdminLogin string
@@ -45,11 +48,21 @@ param customFirewallEndIp string = ''
 
 var deployCustomFirewallRule = !empty(customFirewallStartIp) && !empty(customFirewallEndIp)
 
-module sqlServer './modules/sql-server.bicep' = {
-  name: 'sql-server-deployment'
+module appSqlServer './modules/sql-server.bicep' = {
+  name: 'app-sql-server-deployment'
   params: {
     location: location
-    sqlServerName: sqlServerName
+    sqlServerName: appSqlServerName
+    sqlAdminLogin: sqlAdminLogin
+    sqlAdminPassword: sqlAdminPassword
+  }
+}
+
+module jobSqlServer './modules/sql-server.bicep' = {
+  name: 'job-sql-server-deployment'
+  params: {
+    location: location
+    sqlServerName: jobSqlServerName
     sqlAdminLogin: sqlAdminLogin
     sqlAdminPassword: sqlAdminPassword
   }
@@ -59,7 +72,7 @@ module sqlDatabase './modules/sql-database.bicep' = {
   name: 'sql-application-database-deployment'
   params: {
     location: location
-    sqlServerName: sqlServer.outputs.sqlServerName
+    sqlServerName: appSqlServer.outputs.sqlServerName
     databaseName: sqlDatabaseName
     databaseSkuName: sqlDatabaseSkuName
     databaseSkuTier: sqlDatabaseSkuTier
@@ -70,7 +83,7 @@ module jobDatabase './modules/sql-database.bicep' = {
   name: 'sql-job-database-deployment'
   params: {
     location: location
-    sqlServerName: sqlServer.outputs.sqlServerName
+    sqlServerName: jobSqlServer.outputs.sqlServerName
     databaseName: jobDatabaseName
     databaseSkuName: jobDatabaseSkuName
     databaseSkuTier: jobDatabaseSkuTier
@@ -78,9 +91,19 @@ module jobDatabase './modules/sql-database.bicep' = {
 }
 
 module allowAzureFirewallRule './modules/sql-firewall-rule.bicep' = if (allowAzureServices) {
-  name: 'sql-firewall-allow-azure-services-deployment'
+  name: 'app-sql-firewall-allow-azure-services-deployment'
   params: {
-    sqlServerName: sqlServer.outputs.sqlServerName
+    sqlServerName: appSqlServer.outputs.sqlServerName
+    ruleName: 'AllowAzureServices'
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+}
+
+module jobAllowAzureFirewallRule './modules/sql-firewall-rule.bicep' = if (allowAzureServices) {
+  name: 'job-sql-firewall-allow-azure-services-deployment'
+  params: {
+    sqlServerName: jobSqlServer.outputs.sqlServerName
     ruleName: 'AllowAzureServices'
     startIpAddress: '0.0.0.0'
     endIpAddress: '0.0.0.0'
@@ -88,9 +111,19 @@ module allowAzureFirewallRule './modules/sql-firewall-rule.bicep' = if (allowAzu
 }
 
 module customFirewallRule './modules/sql-firewall-rule.bicep' = if (deployCustomFirewallRule) {
-  name: 'sql-firewall-custom-client-ip-deployment'
+  name: 'app-sql-firewall-custom-client-ip-deployment'
   params: {
-    sqlServerName: sqlServer.outputs.sqlServerName
+    sqlServerName: appSqlServer.outputs.sqlServerName
+    ruleName: 'AllowCustomClientIp'
+    startIpAddress: customFirewallStartIp
+    endIpAddress: customFirewallEndIp
+  }
+}
+
+module jobCustomFirewallRule './modules/sql-firewall-rule.bicep' = if (deployCustomFirewallRule) {
+  name: 'job-sql-firewall-custom-client-ip-deployment'
+  params: {
+    sqlServerName: jobSqlServer.outputs.sqlServerName
     ruleName: 'AllowCustomClientIp'
     startIpAddress: customFirewallStartIp
     endIpAddress: customFirewallEndIp
@@ -101,14 +134,16 @@ module elasticJobAgent './modules/elastic-job-agent.bicep' = {
   name: 'sql-elastic-job-agent-deployment'
   params: {
     location: location
-    sqlServerName: sqlServer.outputs.sqlServerName
+    sqlServerName: jobSqlServer.outputs.sqlServerName
     elasticJobAgentName: elasticJobAgentName
     jobDatabaseId: jobDatabase.outputs.databaseId
   }
 }
 
-output sqlServerId string = sqlServer.outputs.sqlServerId
-output sqlServerFqdn string = sqlServer.outputs.sqlServerFqdn
+output appSqlServerId string = appSqlServer.outputs.sqlServerId
+output appSqlServerFqdn string = appSqlServer.outputs.sqlServerFqdn
+output jobSqlServerId string = jobSqlServer.outputs.sqlServerId
+output jobSqlServerFqdn string = jobSqlServer.outputs.sqlServerFqdn
 output sqlDatabaseId string = sqlDatabase.outputs.databaseId
 output jobDatabaseId string = jobDatabase.outputs.databaseId
 output elasticJobAgentId string = elasticJobAgent.outputs.elasticJobAgentId

@@ -15,9 +15,6 @@ param entraAdminLogin string
 @description('Object ID (GUID) of the Entra administrator principal for the Entra-only SQL server.')
 param entraAdminObjectId string
 
-@description('Tenant ID (GUID) for the Entra administrator principal for the Entra-only SQL server.')
-param entraTenantId string
-
 @description('Name of the primary application database.')
 param sqlDatabaseName string = 'appdb'
 
@@ -57,7 +54,6 @@ module appSqlServer './modules/sql-server-entra-auth.bicep' = {
     sqlServerName: appSqlServerName
     entraAdminLogin: entraAdminLogin
     entraAdminObjectId: entraAdminObjectId
-    entraTenantId: entraTenantId
   }
 }
 
@@ -68,7 +64,6 @@ module jobSqlServer './modules/sql-server-entra-auth.bicep' = {
     sqlServerName: jobSqlServerName
     entraAdminLogin: entraAdminLogin
     entraAdminObjectId: entraAdminObjectId
-    entraTenantId: entraTenantId
   }
 }
 

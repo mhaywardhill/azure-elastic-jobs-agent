@@ -10,38 +10,20 @@ param entraAdminLogin string
 @description('Object ID (GUID) of the Entra administrator principal.')
 param entraAdminObjectId string
 
-@description('Tenant ID (GUID) for the Entra administrator principal.')
-param entraTenantId string
-
 resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
   name: sqlServerName
   location: location
   properties: {
     version: '12.0'
     publicNetworkAccess: 'Enabled'
+    administrators: {
+      administratorType: 'ActiveDirectory'
+      login: entraAdminLogin
+      sid: entraAdminObjectId
+      tenantId: subscription().tenantId
+      azureADOnlyAuthentication: true
+    }
   }
-}
-
-resource sqlServerEntraAdmin 'Microsoft.Sql/servers/administrators@2023-08-01-preview' = {
-  parent: sqlServer
-  name: 'ActiveDirectory'
-  properties: {
-    administratorType: 'ActiveDirectory'
-    login: entraAdminLogin
-    sid: entraAdminObjectId
-    tenantId: entraTenantId
-  }
-}
-
-resource sqlServerEntraOnlyAuth 'Microsoft.Sql/servers/azureADOnlyAuthentications@2023-08-01-preview' = {
-  parent: sqlServer
-  name: 'Default'
-  properties: {
-    azureADOnlyAuthentication: true
-  }
-  dependsOn: [
-    sqlServerEntraAdmin
-  ]
 }
 
 output sqlServerId string = sqlServer.id

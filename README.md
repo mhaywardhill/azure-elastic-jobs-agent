@@ -57,7 +57,6 @@ module appSqlServer './modules/sql-server-entra-auth.bicep' = {
     sqlServerName: appSqlServerName
     entraAdminLogin: entraAdminLogin
     entraAdminObjectId: entraAdminObjectId
-    entraTenantId: entraTenantId
   }
 }
 ```
@@ -81,7 +80,6 @@ export APP_SQL_SERVER_NAME="<globally-unique-app-sql-server-name>"
 export JOB_SQL_SERVER_NAME="<globally-unique-job-sql-server-name>"
 export ENTRA_ADMIN_LOGIN="<entra-admin-display-name>"
 export ENTRA_ADMIN_OBJECT_ID="<entra-admin-object-id-guid>"
-export ENTRA_TENANT_ID="<entra-tenant-id-guid>"
 ```
 
 2. Export optional variables as needed:
@@ -111,7 +109,7 @@ The script validates required variables, ensures the resource group exists, and 
 
 1. Update `infra/main.parameters.json`:
   - `appSqlServerName` and `jobSqlServerName` must be globally unique.
-  - `entraAdminObjectId` and `entraTenantId` must be valid GUID values.
+  - `entraAdminObjectId` must be a valid GUID value.
   - Optionally set `customFirewallStartIp` and `customFirewallEndIp`.
 
 2. Create a resource group (if needed):
@@ -133,7 +131,7 @@ az deployment group create \
 
 - `appSqlServerName`: Application database logical server name (global uniqueness required)
 - `jobSqlServerName`: Job metadata database logical server name (global uniqueness required)
-- `entraAdminLogin` / `entraAdminObjectId` / `entraTenantId`: Entra administrator identity for both SQL servers
+- `entraAdminLogin` / `entraAdminObjectId`: Entra administrator identity for both SQL servers
 - `sqlDatabaseName`: Application database name
 - `jobDatabaseName`: Elastic Job metadata database name
 - `elasticJobAgentName`: Elastic Job Agent resource name
@@ -146,7 +144,6 @@ For `deploy.sh`, these map to the following environment variables:
 - `jobSqlServerName` -> `JOB_SQL_SERVER_NAME`
 - `entraAdminLogin` -> `ENTRA_ADMIN_LOGIN`
 - `entraAdminObjectId` -> `ENTRA_ADMIN_OBJECT_ID`
-- `entraTenantId` -> `ENTRA_TENANT_ID`
 - `sqlDatabaseName` -> `SQL_DATABASE_NAME`
 - `jobDatabaseName` -> `JOB_DATABASE_NAME`
 - `elasticJobAgentName` -> `ELASTIC_JOB_AGENT_NAME`

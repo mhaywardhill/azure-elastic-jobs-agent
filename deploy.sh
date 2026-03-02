@@ -19,7 +19,6 @@ required_vars=(
   JOB_SQL_SERVER_NAME
   ENTRA_ADMIN_LOGIN
   ENTRA_ADMIN_OBJECT_ID
-  ENTRA_TENANT_ID
 )
 
 for var_name in "${required_vars[@]}"; do
@@ -63,7 +62,6 @@ az deployment group create \
     jobSqlServerName="${JOB_SQL_SERVER_NAME}" \
     entraAdminLogin="${ENTRA_ADMIN_LOGIN}" \
     entraAdminObjectId="${ENTRA_ADMIN_OBJECT_ID}" \
-    entraTenantId="${ENTRA_TENANT_ID}" \
     sqlDatabaseName="${SQL_DATABASE_NAME}" \
     sqlDatabaseSkuName="${SQL_DATABASE_SKU_NAME}" \
     sqlDatabaseSkuTier="${SQL_DATABASE_SKU_TIER}" \

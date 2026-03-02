@@ -17,9 +17,6 @@
     "entraAdminObjectId": {
       "value": "<entra-admin-object-id-guid>"
     },
-    "entraTenantId": {
-      "value": "<entra-tenant-id-guid>"
-    },
     "sqlDatabaseName": {
       "value": "appdb"
     },

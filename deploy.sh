@@ -17,8 +17,10 @@ required_vars=(
   LOCATION
   APP_SQL_SERVER_NAME
   JOB_SQL_SERVER_NAME
-  SQL_ADMIN_LOGIN
-  SQL_ADMIN_PASSWORD
+  ENTRA_SQL_SERVER_NAME
+  ENTRA_ADMIN_LOGIN
+  ENTRA_ADMIN_OBJECT_ID
+  ENTRA_TENANT_ID
 )
 
 for var_name in "${required_vars[@]}"; do
@@ -60,8 +62,10 @@ az deployment group create \
     location="${LOCATION}" \
     appSqlServerName="${APP_SQL_SERVER_NAME}" \
     jobSqlServerName="${JOB_SQL_SERVER_NAME}" \
-    sqlAdminLogin="${SQL_ADMIN_LOGIN}" \
-    sqlAdminPassword="${SQL_ADMIN_PASSWORD}" \
+    entraSqlServerName="${ENTRA_SQL_SERVER_NAME}" \
+    entraAdminLogin="${ENTRA_ADMIN_LOGIN}" \
+    entraAdminObjectId="${ENTRA_ADMIN_OBJECT_ID}" \
+    entraTenantId="${ENTRA_TENANT_ID}" \
     sqlDatabaseName="${SQL_DATABASE_NAME}" \
     sqlDatabaseSkuName="${SQL_DATABASE_SKU_NAME}" \
     sqlDatabaseSkuTier="${SQL_DATABASE_SKU_TIER}" \

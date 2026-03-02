@@ -9,12 +9,17 @@ param appSqlServerName string
 @description('Name of the Azure SQL logical server for the Elastic Job metadata database.')
 param jobSqlServerName string
 
-@description('Administrator username for the SQL server.')
-param sqlAdminLogin string
+@description('Name of the Azure SQL logical server that uses Entra-only authentication.')
+param entraSqlServerName string
 
-@secure()
-@description('Administrator password for the SQL server.')
-param sqlAdminPassword string
+@description('Entra administrator login name (user, group, or service principal display name) for the Entra-only SQL server.')
+param entraAdminLogin string
+
+@description('Object ID (GUID) of the Entra administrator principal for the Entra-only SQL server.')
+param entraAdminObjectId string
+
+@description('Tenant ID (GUID) for the Entra administrator principal for the Entra-only SQL server.')
+param entraTenantId string
 
 @description('Name of the primary application database.')
 param sqlDatabaseName string = 'appdb'
@@ -48,23 +53,36 @@ param customFirewallEndIp string = ''
 
 var deployCustomFirewallRule = !empty(customFirewallStartIp) && !empty(customFirewallEndIp)
 
-module appSqlServer './modules/sql-server.bicep' = {
+module appSqlServer './modules/sql-server-entra-auth.bicep' = {
   name: 'app-sql-server-deployment'
   params: {
     location: location
     sqlServerName: appSqlServerName
-    sqlAdminLogin: sqlAdminLogin
-    sqlAdminPassword: sqlAdminPassword
+    entraAdminLogin: entraAdminLogin
+    entraAdminObjectId: entraAdminObjectId
+    entraTenantId: entraTenantId
   }
 }
 
-module jobSqlServer './modules/sql-server.bicep' = {
+module jobSqlServer './modules/sql-server-entra-auth.bicep' = {
   name: 'job-sql-server-deployment'
   params: {
     location: location
     sqlServerName: jobSqlServerName
-    sqlAdminLogin: sqlAdminLogin
-    sqlAdminPassword: sqlAdminPassword
+    entraAdminLogin: entraAdminLogin
+    entraAdminObjectId: entraAdminObjectId
+    entraTenantId: entraTenantId
+  }
+}
+
+module entraSqlServer './modules/sql-server-entra-auth.bicep' = {
+  name: 'entra-sql-server-deployment'
+  params: {
+    location: location
+    sqlServerName: entraSqlServerName
+    entraAdminLogin: entraAdminLogin
+    entraAdminObjectId: entraAdminObjectId
+    entraTenantId: entraTenantId
   }
 }
 
@@ -110,6 +128,16 @@ module jobAllowAzureFirewallRule './modules/sql-firewall-rule.bicep' = if (allow
   }
 }
 
+module entraAllowAzureFirewallRule './modules/sql-firewall-rule.bicep' = if (allowAzureServices) {
+  name: 'entra-sql-firewall-allow-azure-services-deployment'
+  params: {
+    sqlServerName: entraSqlServer.outputs.sqlServerName
+    ruleName: 'AllowAzureServices'
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+}
+
 module customFirewallRule './modules/sql-firewall-rule.bicep' = if (deployCustomFirewallRule) {
   name: 'app-sql-firewall-custom-client-ip-deployment'
   params: {
@@ -130,6 +158,16 @@ module jobCustomFirewallRule './modules/sql-firewall-rule.bicep' = if (deployCus
   }
 }
 
+module entraCustomFirewallRule './modules/sql-firewall-rule.bicep' = if (deployCustomFirewallRule) {
+  name: 'entra-sql-firewall-custom-client-ip-deployment'
+  params: {
+    sqlServerName: entraSqlServer.outputs.sqlServerName
+    ruleName: 'AllowCustomClientIp'
+    startIpAddress: customFirewallStartIp
+    endIpAddress: customFirewallEndIp
+  }
+}
+
 module elasticJobAgent './modules/elastic-job-agent.bicep' = {
   name: 'sql-elastic-job-agent-deployment'
   params: {
@@ -144,6 +182,8 @@ output appSqlServerId string = appSqlServer.outputs.sqlServerId
 output appSqlServerFqdn string = appSqlServer.outputs.sqlServerFqdn
 output jobSqlServerId string = jobSqlServer.outputs.sqlServerId
 output jobSqlServerFqdn string = jobSqlServer.outputs.sqlServerFqdn
+output entraSqlServerId string = entraSqlServer.outputs.sqlServerId
+output entraSqlServerFqdn string = entraSqlServer.outputs.sqlServerFqdn
 output sqlDatabaseId string = sqlDatabase.outputs.databaseId
 output jobDatabaseId string = jobDatabase.outputs.databaseId
 output elasticJobAgentId string = elasticJobAgent.outputs.elasticJobAgentId

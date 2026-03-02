@@ -11,11 +11,17 @@
     "jobSqlServerName": {
       "value": "<unique-job-sql-server-name>"
     },
-    "sqlAdminLogin": {
-      "value": "sqladminuser"
+    "entraSqlServerName": {
+      "value": "<unique-entra-sql-server-name>"
     },
-    "sqlAdminPassword": {
-      "value": "<strong-password>"
+    "entraAdminLogin": {
+      "value": "<entra-admin-display-name>"
+    },
+    "entraAdminObjectId": {
+      "value": "<entra-admin-object-id-guid>"
+    },
+    "entraTenantId": {
+      "value": "<entra-tenant-id-guid>"
     },
     "sqlDatabaseName": {
       "value": "appdb"

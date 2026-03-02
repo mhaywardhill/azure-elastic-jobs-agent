@@ -33,7 +33,7 @@ flowchart TD
 ## Repository Structure
 
 - `deploy.sh`: Deploys using exported environment variables
-- `post-deploy-target-group.ps1`: Configures Elastic Job target groups and target members in the job database
+- `post-deploy-target-group.sh`: Configures Elastic Job target groups and target members using the same environment variables as deployment
 - `infra/main.bicep`: Deployment entry point and module orchestration
 - `infra/modules/sql-server-sql-auth.bicep`: SQL-auth SQL logical server
 - `infra/modules/sql-server-entra-auth.bicep`: Entra-auth (Entra-only) SQL logical server
@@ -42,24 +42,6 @@ flowchart TD
 - `infra/modules/elastic-job-agent.bicep`: Elastic Job Agent
 - `infra/main.parameters.json`: Example parameter values
 
-## Customer Repro (Entra Module)
-
-For customer reproduction, use `infra/modules/sql-server-entra-auth.bicep` as the SQL server module.
-
-The SQL-auth module (`infra/modules/sql-server-sql-auth.bicep`) is still included in this repo for scenarios that require SQL authentication, but the repro path should target Entra-only authentication.
-
-Example module usage:
-
-```bicep
-module appSqlServer './modules/sql-server-entra-auth.bicep' = {
-  name: 'app-sql-server-deployment'
-  params: {
-    location: location
-    sqlServerName: appSqlServerName
-    entraAdminLogin: entraAdminLogin
-    entraAdminObjectId: entraAdminObjectId
-  }
-}
 ```
 
 ## Prerequisites
@@ -110,30 +92,31 @@ The script validates required variables, ensures the resource group exists, and 
 
 Elastic Job target groups are configured in the job database after infrastructure deployment.
 
-Run the script from PowerShell:
+Run the Bash-native script (uses your existing deployment environment variables):
 
-```powershell
-./post-deploy-target-group.ps1 \
-  -JobSqlServerName "<job-sql-server-name>" \
-  -JobDatabaseName "jobdb" \
-  -TargetGroupName "serverGroup" \
-  -TargetServerName "<app-sql-server-name>"
+```bash
+./post-deploy-target-group.sh
 ```
 
-To target a single database instead of all databases on a server:
+By default, this script uses:
+- `JOB_SQL_SERVER_NAME` as the Elastic Job Agent server
+- `APP_SQL_SERVER_NAME` as the target server
+- `ELASTIC_JOB_AGENT_NAME` as the agent name
+- `RESOURCE_GROUP` as the resource group
+- `TARGET_GROUP_NAME=serverGroup`
+- `TARGET_MEMBERSHIP_TYPE=Include`
 
-```powershell
-./post-deploy-target-group.ps1 \
-  -JobSqlServerName "<job-sql-server-name>" \
-  -JobDatabaseName "jobdb" \
-  -TargetGroupName "singleDbGroup" \
-  -TargetServerName "<app-sql-server-name>" \
-  -TargetDatabaseName "appdb"
+To target a single database instead of all databases on the app server:
+
+```bash
+export TARGET_GROUP_NAME="singleDbGroup"
+export TARGET_DATABASE_NAME="${SQL_DATABASE_NAME:-appdb}"
+./post-deploy-target-group.sh
 ```
 
 Prerequisites:
 - Azure CLI authenticated (`az login`)
-- `SqlServer` PowerShell module installed (`Install-Module SqlServer -Scope CurrentUser`)
+- `python3` available in the shell environment
 
 ### Option 2: Deploy with parameter file
 

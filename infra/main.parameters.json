@@ -11,9 +11,6 @@
     "jobSqlServerName": {
       "value": "<unique-job-sql-server-name>"
     },
-    "entraSqlServerName": {
-      "value": "<unique-entra-sql-server-name>"
-    },
     "entraAdminLogin": {
       "value": "<entra-admin-display-name>"
     },

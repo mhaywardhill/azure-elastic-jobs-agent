@@ -6,9 +6,8 @@ Infrastructure-as-Code templates to provision an Azure SQL environment with an E
 
 This deployment creates:
 
-- Azure SQL logical server for application database
-- Azure SQL logical server for Elastic Job metadata database
-- Azure SQL logical server with Entra-only authentication
+- Azure SQL logical server for application database (Entra-only authentication)
+- Azure SQL logical server for Elastic Job metadata database (Entra-only authentication)
 - Primary application database
 - Elastic Job metadata database
 - Azure SQL Elastic Job Agent
@@ -20,7 +19,6 @@ This deployment creates:
 flowchart TD
   RG[Resource Group] --> APP_SQL[App Azure SQL Server]
   RG --> JOB_SQL[Job Azure SQL Server]
-  RG --> ENTRA_SQL[Entra-only Azure SQL Server]
   APP_SQL --> APPDB[Application Database]
   JOB_SQL --> JOBDB[Job Metadata Database]
   JOB_SQL --> AGENT[Elastic Job Agent]
@@ -30,8 +28,6 @@ flowchart TD
   APP_SQL --> APP_FW2[Firewall Rule: AllowCustomClientIp]
   JOB_SQL --> JOB_FW1[Firewall Rule: AllowAzureServices]
   JOB_SQL --> JOB_FW2[Firewall Rule: AllowCustomClientIp]
-  ENTRA_SQL --> ENTRA_FW1[Firewall Rule: AllowAzureServices]
-  ENTRA_SQL --> ENTRA_FW2[Firewall Rule: AllowCustomClientIp]
 ```
 
 ## Repository Structure
@@ -54,11 +50,11 @@ The SQL-auth module (`infra/modules/sql-server-sql-auth.bicep`) is still include
 Example module usage:
 
 ```bicep
-module reproSqlServer './modules/sql-server-entra-auth.bicep' = {
-  name: 'repro-entra-sql-server-deployment'
+module appSqlServer './modules/sql-server-entra-auth.bicep' = {
+  name: 'app-sql-server-deployment'
   params: {
     location: location
-    sqlServerName: entraSqlServerName
+    sqlServerName: appSqlServerName
     entraAdminLogin: entraAdminLogin
     entraAdminObjectId: entraAdminObjectId
     entraTenantId: entraTenantId
@@ -83,7 +79,6 @@ export RESOURCE_GROUP="rg-sql-jobs-dev"
 export LOCATION="eastus"
 export APP_SQL_SERVER_NAME="<globally-unique-app-sql-server-name>"
 export JOB_SQL_SERVER_NAME="<globally-unique-job-sql-server-name>"
-export ENTRA_SQL_SERVER_NAME="<globally-unique-entra-sql-server-name>"
 export ENTRA_ADMIN_LOGIN="<entra-admin-display-name>"
 export ENTRA_ADMIN_OBJECT_ID="<entra-admin-object-id-guid>"
 export ENTRA_TENANT_ID="<entra-tenant-id-guid>"
@@ -115,7 +110,7 @@ The script validates required variables, ensures the resource group exists, and 
 ### Option 2: Deploy with parameter file
 
 1. Update `infra/main.parameters.json`:
-  - `appSqlServerName`, `jobSqlServerName`, and `entraSqlServerName` must all be globally unique.
+  - `appSqlServerName` and `jobSqlServerName` must be globally unique.
   - `entraAdminObjectId` and `entraTenantId` must be valid GUID values.
   - Optionally set `customFirewallStartIp` and `customFirewallEndIp`.
 
@@ -138,8 +133,7 @@ az deployment group create \
 
 - `appSqlServerName`: Application database logical server name (global uniqueness required)
 - `jobSqlServerName`: Job metadata database logical server name (global uniqueness required)
-- `entraSqlServerName`: Entra-only logical server name (global uniqueness required)
-- `entraAdminLogin` / `entraAdminObjectId` / `entraTenantId`: Entra administrator identity for the Entra-only SQL server
+- `entraAdminLogin` / `entraAdminObjectId` / `entraTenantId`: Entra administrator identity for both SQL servers
 - `sqlDatabaseName`: Application database name
 - `jobDatabaseName`: Elastic Job metadata database name
 - `elasticJobAgentName`: Elastic Job Agent resource name
@@ -150,7 +144,6 @@ For `deploy.sh`, these map to the following environment variables:
 
 - `appSqlServerName` -> `APP_SQL_SERVER_NAME`
 - `jobSqlServerName` -> `JOB_SQL_SERVER_NAME`
-- `entraSqlServerName` -> `ENTRA_SQL_SERVER_NAME`
 - `entraAdminLogin` -> `ENTRA_ADMIN_LOGIN`
 - `entraAdminObjectId` -> `ENTRA_ADMIN_OBJECT_ID`
 - `entraTenantId` -> `ENTRA_TENANT_ID`
@@ -169,8 +162,6 @@ The deployment returns:
 - App SQL server fully qualified domain name
 - Job SQL server resource ID
 - Job SQL server fully qualified domain name
-- Entra SQL server resource ID
-- Entra SQL server fully qualified domain name
 - Application database resource ID
 - Job database resource ID
 - Elastic Job Agent resource ID

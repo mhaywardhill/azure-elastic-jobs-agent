@@ -9,9 +9,6 @@ param appSqlServerName string
 @description('Name of the Azure SQL logical server for the Elastic Job metadata database.')
 param jobSqlServerName string
 
-@description('Name of the Azure SQL logical server that uses Entra-only authentication.')
-param entraSqlServerName string
-
 @description('Entra administrator login name (user, group, or service principal display name) for the Entra-only SQL server.')
 param entraAdminLogin string
 
@@ -75,17 +72,6 @@ module jobSqlServer './modules/sql-server-entra-auth.bicep' = {
   }
 }
 
-module entraSqlServer './modules/sql-server-entra-auth.bicep' = {
-  name: 'entra-sql-server-deployment'
-  params: {
-    location: location
-    sqlServerName: entraSqlServerName
-    entraAdminLogin: entraAdminLogin
-    entraAdminObjectId: entraAdminObjectId
-    entraTenantId: entraTenantId
-  }
-}
-
 module sqlDatabase './modules/sql-database.bicep' = {
   name: 'sql-application-database-deployment'
   params: {
@@ -128,16 +114,6 @@ module jobAllowAzureFirewallRule './modules/sql-firewall-rule.bicep' = if (allow
   }
 }
 
-module entraAllowAzureFirewallRule './modules/sql-firewall-rule.bicep' = if (allowAzureServices) {
-  name: 'entra-sql-firewall-allow-azure-services-deployment'
-  params: {
-    sqlServerName: entraSqlServer.outputs.sqlServerName
-    ruleName: 'AllowAzureServices'
-    startIpAddress: '0.0.0.0'
-    endIpAddress: '0.0.0.0'
-  }
-}
-
 module customFirewallRule './modules/sql-firewall-rule.bicep' = if (deployCustomFirewallRule) {
   name: 'app-sql-firewall-custom-client-ip-deployment'
   params: {
@@ -158,16 +134,6 @@ module jobCustomFirewallRule './modules/sql-firewall-rule.bicep' = if (deployCus
   }
 }
 
-module entraCustomFirewallRule './modules/sql-firewall-rule.bicep' = if (deployCustomFirewallRule) {
-  name: 'entra-sql-firewall-custom-client-ip-deployment'
-  params: {
-    sqlServerName: entraSqlServer.outputs.sqlServerName
-    ruleName: 'AllowCustomClientIp'
-    startIpAddress: customFirewallStartIp
-    endIpAddress: customFirewallEndIp
-  }
-}
-
 module elasticJobAgent './modules/elastic-job-agent.bicep' = {
   name: 'sql-elastic-job-agent-deployment'
   params: {
@@ -182,8 +148,6 @@ output appSqlServerId string = appSqlServer.outputs.sqlServerId
 output appSqlServerFqdn string = appSqlServer.outputs.sqlServerFqdn
 output jobSqlServerId string = jobSqlServer.outputs.sqlServerId
 output jobSqlServerFqdn string = jobSqlServer.outputs.sqlServerFqdn
-output entraSqlServerId string = entraSqlServer.outputs.sqlServerId
-output entraSqlServerFqdn string = entraSqlServer.outputs.sqlServerFqdn
 output sqlDatabaseId string = sqlDatabase.outputs.databaseId
 output jobDatabaseId string = jobDatabase.outputs.databaseId
 output elasticJobAgentId string = elasticJobAgent.outputs.elasticJobAgentId

@@ -33,6 +33,7 @@ flowchart TD
 ## Repository Structure
 
 - `deploy.sh`: Deploys using exported environment variables
+- `post-deploy-target-group.ps1`: Configures Elastic Job target groups and target members in the job database
 - `infra/main.bicep`: Deployment entry point and module orchestration
 - `infra/modules/sql-server-sql-auth.bicep`: SQL-auth SQL logical server
 - `infra/modules/sql-server-entra-auth.bicep`: Entra-auth (Entra-only) SQL logical server
@@ -104,6 +105,35 @@ export CUSTOM_FIREWALL_END_IP=""
 ```
 
 The script validates required variables, ensures the resource group exists, and deploys `infra/main.bicep`.
+
+## Post-Deployment: Configure Elastic Job Target Group
+
+Elastic Job target groups are configured in the job database after infrastructure deployment.
+
+Run the script from PowerShell:
+
+```powershell
+./post-deploy-target-group.ps1 \
+  -JobSqlServerName "<job-sql-server-name>" \
+  -JobDatabaseName "jobdb" \
+  -TargetGroupName "serverGroup" \
+  -TargetServerName "<app-sql-server-name>"
+```
+
+To target a single database instead of all databases on a server:
+
+```powershell
+./post-deploy-target-group.ps1 \
+  -JobSqlServerName "<job-sql-server-name>" \
+  -JobDatabaseName "jobdb" \
+  -TargetGroupName "singleDbGroup" \
+  -TargetServerName "<app-sql-server-name>" \
+  -TargetDatabaseName "appdb"
+```
+
+Prerequisites:
+- Azure CLI authenticated (`az login`)
+- `SqlServer` PowerShell module installed (`Install-Module SqlServer -Scope CurrentUser`)
 
 ### Option 2: Deploy with parameter file
 
